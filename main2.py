@@ -34,7 +34,7 @@ def load_image(name, colorkey=None):
 
 def generate_level(level):
     new_player, x, y = None, None, None
-    for y in range(-1, len(level)):
+    for y in range(len(level)):
         for x in range(len(level[y])):
             if level[y][x] == '.':
                 Tile('empty', x, y)
@@ -63,7 +63,6 @@ all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
 box_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
-
 
 
 tile_images = {
@@ -139,7 +138,10 @@ def start_screen():
 
 def main():
     start_screen()
-    player, level_x, level_y = generate_level(load_level('map.txt'))
+
+    file = input()
+    player, level_x, level_y = generate_level(load_level(file))
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
