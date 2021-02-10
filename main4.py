@@ -34,7 +34,7 @@ def load_image(name, colorkey=None):
 
 def generate_level(level):
     new_player, x, y = None, None, None
-    for y in range(-1, len(level)):
+    for y in range(len(level)):
         for x in range(len(level[y])):
             if level[y][x] == '.':
                 Tile('empty', x, y)
@@ -58,12 +58,10 @@ screen = pygame.display.set_mode(size)
 FPS = 50
 clock = pygame.time.Clock()
 
-
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
 box_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
-
 
 tile_images = {
     'wall': load_image('box.png'),
@@ -71,18 +69,22 @@ tile_images = {
 }
 player_image = load_image('mario.png')
 
-
 tile_width = tile_height = 50
 
 
 class Tile(pygame.sprite.Sprite):
+    start_width = ()
+
     def __init__(self, tile_type, pos_x, pos_y):
         super().__init__(tiles_group, all_sprites)
         self.image = tile_images[tile_type]
         self.rect = self.image.get_rect().move(
             tile_width * pos_x, tile_height * pos_y)
+        if not Tile.start_width:
+            Tile.start_width = (self.rect.x, self.rect.y)
         if tile_type == 'wall':
             box_group.add(self)
+
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y):
@@ -107,7 +109,7 @@ class Player(pygame.sprite.Sprite):
 
 
 class Camera:
-    # зададим начальный сдвиг камеры
+    change = None
     def __init__(self):
         self.dx = 0
         self.dy = 0
@@ -116,12 +118,21 @@ class Camera:
     def apply(self, obj):
         obj.rect.x += self.dx
         obj.rect.y += self.dy
+        if obj.rect.x < 0:
+            obj.rect.x = (9 * tile_width) + 25
+        if obj.rect.x >= (10 * tile_width) + 25:
+            obj.rect.x = 25
+        if obj.rect.y < Camera.change[1]:
+            obj.rect.y = Camera.change[1] + (9 * tile_width)
+        if obj.rect.y >= Camera.change[1] + (10 * tile_width):
+            obj.rect.y = Camera.change[1]
 
-    # позиционировать камеру на объекте target
+    # позицинировать камеру на объекте target
     def update(self, target):
         self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
         self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT // 2)
-
+        if not Camera.change:
+            Camera.change = (self.dx, self.dy)
 
 def start_screen():
     intro_text = ["ЗАСТАВКА", "",
@@ -154,9 +165,12 @@ def start_screen():
 
 
 camera = Camera()
+
+
 def main():
     start_screen()
-    player, level_x, level_y = generate_level(load_level('map.txt'))
+    global player, level_x, level_y
+    player, level_x, level_y = generate_level(load_level('map3.txt'))
     while True:
         screen.fill((0, 0, 0))
         for event in pygame.event.get():
@@ -167,6 +181,8 @@ def main():
         camera.update(player)
         for sprite in all_sprites:
             camera.apply(sprite)
+
+        all_sprites.update()
         all_sprites.draw(screen)
         pygame.display.flip()
 
